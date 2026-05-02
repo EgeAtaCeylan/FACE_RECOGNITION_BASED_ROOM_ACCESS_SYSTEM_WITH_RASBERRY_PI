@@ -75,6 +75,49 @@ The result is a compact end-to-end prototype that combines real-time communicati
 └── TrainingPhotos/
 ```
 
+## 🔄 Project Flow Diagram
+
+```mermaid
+flowchart TD
+    A[User approaches room camera] --> B[Raspberry Pi client captures frame]
+    B --> C[Client sends frame to Python server over TCP socket]
+    C --> D[Server detects faces using OpenCV Haar Cascade]
+
+    D --> E{How many faces are detected?}
+
+    E -->|0 faces| F[Access denied]
+    F --> G[Client asks user to look at the camera and retry]
+
+    E -->|More than 1 face| H[Access denied]
+    H --> I[Client asks user to show only one face and retry]
+
+    E -->|Exactly 1 face| J[Crop and resize detected face]
+    J --> K[Preprocess face image]
+    K --> L[Run VGGFace-based recognition model]
+
+    L --> M{Is the face known?}
+
+    M -->|No| N[Access denied]
+    N --> O[Client displays unknown user rejection message]
+
+    M -->|Yes| P[Get predicted user label]
+    P --> Q{Is the user authorized for the room?}
+
+    Q -->|No| R[Access denied]
+    R --> S[Client displays known user without access message]
+
+    Q -->|Yes| T[Access granted]
+    T --> U[Client welcomes user and ends process]
+
+    G --> V{Timeout reached?}
+    I --> V
+    O --> V
+    S --> V
+
+    V -->|No| B
+    V -->|Yes| W[Terminate entering process]
+```
+
 ## ⚙️ How It Works
 
 1. The room client starts the Raspberry Pi camera and connects to the server.
